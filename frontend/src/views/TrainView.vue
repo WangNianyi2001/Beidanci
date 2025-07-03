@@ -1,8 +1,9 @@
 <template>
+	<h1>Beidanci | 训练</h1>
+	<button @click="$router.push('/')">回到首页</button>
 	<div v-if="isLoading">加载中...</div>
 	<div v-else-if="!inTraining">
 		<button @click="startTraining">开始新的训练</button>
-		<button @click="$router.push('/')">回到首页</button>
 	</div>
 	<div v-else>
 		<div>
@@ -68,7 +69,7 @@ const cachedDicts = {};
 async function startTraining() {
 	isLoading.value = true;
 
-	trainingSet.value = await (await fetch(`/train/generate?user=${user}&size=${size}`)).json().data;
+	trainingSet.value = (await (await fetch(`/train/generate?user=${currentUser.value}&size=${size}`)).json()).data;
 
 	// Preload dictionaries.
 	for(const word of trainingSet.value) {

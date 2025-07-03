@@ -1,10 +1,7 @@
 <template>
+	<h1>Beidanci | 设置</h1>
+	<button @click="$router.push('/')">回到首页</button>
 	<div v-if="ready">
-		<h2>设置</h2>
-		<p>
-			<button @click="$router.push('/')">回到首页</button>
-		</p>
-
 		<label>用户名：</label>
 		<span>{{ user }}</span><br />
 

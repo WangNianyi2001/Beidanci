@@ -1,22 +1,20 @@
 <template>
+	<h1>Beidanci | 首页</h1>
+
 	<div>
-		<h1>Beidanci</h1>
+		<label>当前用户：</label>
+		<select v-model="currentUser">
+			<option v-for="u in allUsers" :key="u">{{ u }}</option>
+		</select>
 
-		<div>
-			<label>当前用户：</label>
-			<select v-model="currentUser">
-				<option v-for="u in allUsers" :key="u">{{ u }}</option>
-			</select>
+		<button @click="createUser">新增用户</button>
+		<button @click="deleteUser">删除当前用户</button>
+	</div>
 
-			<button @click="createUser">新增用户</button>
-			<button @click="deleteUser">删除当前用户</button>
-		</div>
-
-		<div>
-			<button @click="$router.push('/train')">训练</button>
-			<button @click="$router.push('/dictionary')">词库管理</button>
-			<button @click="$router.push('/settings')">设置</button>
-		</div>
+	<div>
+		<button @click="$router.push('/train')">训练</button>
+		<button @click="$router.push('/dictionary')">词库管理</button>
+		<button @click="$router.push('/settings')">设置</button>
 	</div>
 </template>
 
