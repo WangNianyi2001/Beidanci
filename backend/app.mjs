@@ -6,7 +6,7 @@ const PORT = 8533;
 const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(bodyParser.json({ limit: '100mb' }));
 
 
 

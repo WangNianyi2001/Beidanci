@@ -108,3 +108,21 @@ router.delete('/reset-dictionary', (req, res) => {
 	res.json({ success: true });
 });
 
+// PATCH /user/set-settings?user=...
+router.patch('/set-settings', (req, res) => {
+	const { user } = req.query;
+	const settings = req.body;
+
+	if (!user || typeof settings !== 'object')
+		return res.status(400).json({ success: false, message: 'Missing user or settings' });
+
+	const path = Path.join(userDir, `${user}.json`);
+	if (!Fs.existsSync(path))
+		return res.status(404).json({ success: false, message: 'User not found' });
+
+	const userData = JSON.parse(Fs.readFileSync(path, 'utf-8'));
+	userData.settings = { ...userData.settings, ...settings }; // 合并修改
+	Fs.writeFileSync(path, JSON.stringify(userData, null, 2));
+
+	res.json({ success: true });
+});
