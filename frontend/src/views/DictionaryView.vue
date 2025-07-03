@@ -33,8 +33,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-
-const user = 'Nianyi';
+import { currentUser } from '../stores/userStore.js';
 
 const dicts = ref([]);
 const enabled = ref(new Set());
@@ -42,7 +41,6 @@ const ready = ref(false);
 
 const showImport = ref(false);
 const importName = ref('');
-const importCSV = ref('');
 
 const importContent = ref('');
 
@@ -60,7 +58,7 @@ function handleFile(event) {
 onMounted(async () => {
 	const [dRes, uRes] = await Promise.all([
 		fetch('/dictionary/list').then(r => r.json()),
-		fetch(`/user/info?user=${user}`).then(r => r.json())
+		fetch(`/user/info?user=${currentUser.value}`).then(r => r.json())
 	]);
 	dicts.value = dRes.data;
 	enabled.value = new Set(uRes.data.enabledDicts ?? []);
@@ -69,7 +67,7 @@ onMounted(async () => {
 
 async function toggle(dict) {
 	const isEnabled = enabled.value.has(dict);
-	const res = await fetch(`/user/set-dictionary-enabled?user=${user}&dict=${dict}&enabled=${!isEnabled}`, {
+	const res = await fetch(`/user/set-dictionary-enabled?user=${currentUser.value}&dict=${dict}&enabled=${!isEnabled}`, {
 		method: 'PATCH'
 	});
 	if (res.ok) {
@@ -87,8 +85,8 @@ async function confirmDelete(dict) {
 }
 
 async function confirmClear(dict) {
-	if (confirm(`确定清除用户 ${user} 在 ${dict} 中的学习记录？`)) {
-		await fetch(`/user/reset-dictionary?user=${user}&dict=${dict}`, { method: 'DELETE' });
+	if (confirm(`确定清除用户 ${currentUser.value} 在 ${dict} 中的学习记录？`)) {
+		await fetch(`/user/reset-dictionary?user=${currentUser.value}&dict=${dict}`, { method: 'DELETE' });
 		alert('清除成功');
 	}
 }

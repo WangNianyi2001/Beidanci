@@ -27,13 +27,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { currentUser } from '../stores/userStore.js';
 
-const user = 'Nianyi'; // TODO: 未来支持切换用户
 const settings = ref({});
 const ready = ref(false);
 
 onMounted(async () => {
-	const res = await fetch(`/user/info?user=${user}`).then(r => r.json());
+	const res = await fetch(`/user/info?user=${currentUser.value}`).then(r => r.json());
 	settings.value = res.data.settings ?? {
 		batchSize: 25,
 		aggressiveness: 0.5,
@@ -43,7 +43,7 @@ onMounted(async () => {
 });
 
 async function save() {
-	const res = await fetch(`/user/set-settings?user=${user}`, {
+	const res = await fetch(`/user/set-settings?user=${currentUser.value}`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify(settings.value)

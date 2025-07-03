@@ -39,8 +39,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { fetchTrainSet, reportTrainResult } from '../api/backend.js';
+import { currentUser } from '../stores/userStore.js';
 
-const user = 'Nianyi'; // TODO: 从设置中读取
 const size = 10;
 const mode = ref('self-report'); // 或 'test'
 
@@ -80,7 +80,7 @@ async function preloadTranslations() {
 async function startTraining() {
 	loading.value = true;
 	inProgress.value = true;
-	words.value = await fetchTrainSet(user, size);
+	words.value = await fetchTrainSet(currentUser.value, size);
 	await preloadTranslations();
 	index.value = 0;
 	results.value = [];
@@ -103,7 +103,7 @@ function mark(score) {
 function finishTraining() {
 	inProgress.value = false;
 	const time = Date.now();
-	reportTrainResult(user, time, results.value);
+	reportTrainResult(currentUser.value, time, results.value);
 	alert('训练完成！');
 }
 
