@@ -1,135 +1,143 @@
 <template>
-	<div v-if="loading">加载中...</div>
-	<div v-else-if="!inProgress">
-		<label>训练模式：</label>
-		<select v-model="mode">
-			<option value="self-report">自我申报</option>
-			<option value="test">测验</option>
-		</select>
-		<br />
+	<div v-if="isLoading">加载中...</div>
+	<div v-else-if="!inTraining">
 		<button @click="startTraining">开始新的训练</button>
 		<button @click="$router.push('/')">回到首页</button>
 	</div>
 	<div v-else>
 		<div>
-			<p>第 {{ index + 1 }} / {{ words.length }} 题</p>
-			<h2 v-if="current">{{ current.word }}</h2>
+			<p>第 {{ index + 1 }} / {{ trainingSet.length }} 题</p>
+			<h2 v-if="currentWord">{{ currentWord.orthography }}</h2>
 
-			<div v-if="!showAnswer">
+			<div v-if="!answered">
 				<div v-if="mode === 'self-report'">
-						<button @click="prepareScore(1)">记住</button>
-						<button @click="prepareScore(0.5)">模糊</button>
-						<button @click="prepareScore(0)">忘记</button>
+						<button @click="markScore(1)">记住</button>
+						<button @click="markScore(0.5)">模糊</button>
+						<button @click="markScore(0)">忘记</button>
 				</div>
 				<div v-else-if="mode === 'test'">
 						<div v-for="(choice, i) in choices" :key="i">
-							<button @click="prepareScore(choice === correct ? 1 : 0)">{{ choice }}</button>
+							<button @click="markScore(choice.orthography === correctWord.orthography ? 1 : 0)">{{ choice.translation }}</button>
 						</div>
-						<button @click="mark(0)">我不会</button>
+						<button @click="markScore(0)">我不会</button>
 				</div>
 			</div>
 			<div v-else>
-				<p>翻译：{{ current.translation }}</p>
-				<button @click="submitScore">下一个</button>
+				<p v-if="mode === 'test'">{{ pendingScore === 1 ? '正确 ✅' : '错误 ❌' }}</p>
+				<p>翻译：{{ currentWord.translation }}</p>
+				<button @click="nextQuestion">下一个</button>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { fetchTrainSet, reportTrainResult } from '../api/backend.js';
+import { ref, computed, onMounted } from 'vue';
 import { currentUser } from '../stores/userStore.js';
 
-const size = 10;
-const mode = ref('self-report'); // 或 'test'
+const mode = ref('self-report');
+const size = ref(25);
 
-const inProgress = ref(false);
-const loading = ref(false);
-const showAnswer = ref(false);
+onMounted(async () => {
+	const res = await fetch(`/user/info?user=${currentUser.value}`).then(r => r.json());
+	mode.value = res.data.settings?.defaultMode ?? 'self-report';
+	size.value = res.data.settings?.batchSize ?? 25;
+});
+
+const isLoading = ref(false);
+const inTraining = ref(false);
+const answered = ref(false);
 const pendingScore = ref(null);
 
-const words = ref([]);
+/** @type {import("vue").Ref<Word[]>} */
+const trainingSet = ref([]);
 const index = ref(0);
 const results = ref([]);
 
-const current = computed(() => words.value[index.value]);
+/** @type {import("vue").ComputedRef<Word>} */
+const currentWord = computed(() => trainingSet.value[index.value]);
 
+/** @type {import("vue").Ref<Word[]>} */
 const choices = ref([]);
-const correct = ref('');
+/** @type {import("vue").Ref<Word>} */
+const correctWord = ref(null);
 
-const vocabularyCache = ref({}); // dictName → { orthography → translation }
-
-async function preloadTranslations() {
-	for (const w of words.value) {
-		if (!vocabularyCache.value[w.dict]) {
-			const res = await fetch(`/dictionary/vocabulary?dict=${w.dict}`).then(r => r.json());
-			const map = {};
-			for (const entry of res.data) {
-				map[entry.orthography] = entry.translation;
-			}
-			vocabularyCache.value[w.dict] = map;
-		}
-	}
-	// 给每个 word 添加 .translation 字段
-	words.value.forEach(w => {
-		w.translation = vocabularyCache.value[w.dict][w.word];
-	});
-}
+/** @type {{ [key:string]: { [key:string]: Word } }} */
+const cachedDicts = {};
 
 async function startTraining() {
-	loading.value = true;
-	inProgress.value = true;
-	words.value = await fetchTrainSet(currentUser.value, size);
-	await preloadTranslations();
-	index.value = 0;
+	isLoading.value = true;
+
+	trainingSet.value = await (await fetch(`/train/generate?user=${user}&size=${size}`)).json().data;
+
+	// Preload dictionaries.
+	for(const word of trainingSet.value) {
+		const dictName = word.dict;
+		if(dictName in cachedDicts)
+			continue;
+
+		const res = await fetch(`/dictionary/vocabulary?dict=${word.dict}`).then(r => r.json());
+		const dict = {};
+		for(const word of res.data) {
+			word.dict = dictName;
+			dict[word.orthography] = word;
+		}
+		cachedDicts[word.dict] = dict;
+	}
 	results.value = [];
-	loading.value = false;
 
-	if (mode.value === 'test') generateChoices();
+	isLoading.value = false;
+	inTraining.value = true;
+	
+	index.value = 0;
+	generateChoices();
 }
 
-function mark(score) {
+function nextQuestion() {
 	results.value.push({
-		dict: current.value.dict,
-		word: current.value.word,
-		scores: [score]
-	});
-	index.value++;
-	if (index.value >= words.value.length) finishTraining();
-	else if (mode.value === 'test') generateChoices();
-}
-
-function finishTraining() {
-	inProgress.value = false;
-	const time = Date.now();
-	reportTrainResult(currentUser.value, time, results.value);
-	alert('训练完成！');
-}
-
-async function generateChoices() {
-	const all = await fetch(`/dictionary/vocabulary?dict=${current.value.dict}`).then(r => r.json());
-	const vocab = all.data.map(w => w.translation);
-	correct.value = vocab.find((_, i) => all.data[i].orthography === current.value.word);
-	const shuffled = vocab.filter(v => v !== correct.value).sort(() => Math.random() - 0.5).slice(0, 3);
-	shuffled.push(correct.value);
-	choices.value = shuffled.sort(() => Math.random() - 0.5);
-}
-
-function prepareScore(score) {
-	pendingScore.value = score;
-	showAnswer.value = true;
-}
-
-function submitScore() {
-	results.value.push({
-		dict: current.value.dict,
-		word: current.value.word,
+		dict: currentWord.value.dict,
+		word: currentWord.value.word,
 		scores: [pendingScore.value]
 	});
-	showAnswer.value = false;
+
 	pendingScore.value = null;
 	index.value++;
-	if (index.value >= words.value.length) finishTraining();
+
+	answered.value = false;
+	if(index.value >= trainingSet.value.length)
+		finishTraining();
+	else
+		generateChoices();
+}
+
+function generateChoices() {
+	const dict = cachedDicts[currentWord.value.dict];
+
+	correctWord.value = dict[currentWord.value.orthography];
+
+	choices.value = Object.values(dict)
+		.filter(word => word.orthography !== correctWord.value.orthography)
+		.sort(() => Math.random() - 0.5)
+		.slice(0, 3);
+	choices.value.push(correctWord.value);
+	choices.value.sort(() => Math.random() - 0.5);
+}
+
+function markScore(score) {
+	answered.value = true;
+	pendingScore.value = score;
+}
+
+async function finishTraining() {
+	inTraining.value = false;
+	const time = Date.now();
+	alert('训练完成！');
+
+	// Report training result
+	await fetch(`/train/report?user=${currentUser.value}`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ time, results: results.value })
+	});
 }
 </script>

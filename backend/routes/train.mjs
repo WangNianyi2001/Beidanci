@@ -63,21 +63,18 @@ router.get('/generate', (req, res) => {
 			const words = LoadDict(dictName);
 			const records = userData.trainingRecords[dictName] || [];
 			const trainedSet = new Set(records.map(R => R.word));
-			for (const W of words) {
+			for (const word of words) {
 				allCandidates.push({
-					word: W.orthography,
+					...word,
 					dict: dictName,
-					trained: trainedSet.has(W.orthography)
+					trained: trainedSet.has(word.orthography)
 				});
 			}
 		}
 
 		// 先用“随机挑选”作为 placeholder（未来替换为智能挑选）
 		const shuffled = allCandidates.sort(() => Math.random() - 0.5);
-		const selected = shuffled.slice(0, size).map(W => ({
-			word: W.word,
-			dict: W.dict
-		}));
+		const selected = shuffled.slice(0, size);
 
 		res.json({ success: true, data: selected });
 	} catch (err) {

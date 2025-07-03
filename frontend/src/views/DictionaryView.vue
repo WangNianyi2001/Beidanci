@@ -5,29 +5,33 @@
 			<button @click="$router.push('/')">回到首页</button>
 		</p>
 
-		<button @click="showImport = true">导入词库</button>
-
-		<ul v-if="ready">
-			<li v-for="dict in dicts" :key="dict">
-				<strong>{{ dict }}</strong>
-				<label>
-					<input type="checkbox" :checked="enabled.has(dict)" @change="toggle(dict)" />
-					启用
-				</label>
-				<button @click="confirmClear(dict)">清除记录</button>
-				<button @click="confirmDelete(dict)">删除词库</button>
-			</li>
-		</ul>
-
-		<div v-if="showImport">
-			<h3>导入词库</h3>
-			<label>词库名：</label><input v-model="importName" /><br />
-
-			<input type="file" accept=".csv" @change="handleFile" /><br />
-
-			<button :disabled="!importContent" @click="doImport">确认导入</button>
-			<button @click="showImport = false">取消</button>
+		<div v-if="loading">
+			<p>加载中...</p>
 		</div>
+		<div v-else>
+			<button @click="showImport = true">导入词库</button>
+
+			<ul v-if="ready">
+				<li v-for="dict in dicts" :key="dict">
+					<strong>{{ dict }}</strong>
+					<label>
+						<input type="checkbox" :checked="enabled.has(dict)" @change="toggle(dict)" />
+						启用
+					</label>
+					<button @click="confirmClear(dict)">清除记录</button>
+					<button @click="confirmDelete(dict)">删除词库</button>
+				</li>
+			</ul>
+
+			<div v-if="showImport">
+				<h3>导入词库</h3>
+				<label>词库名：</label><input v-model="importName" /><br />
+
+				<input type="file" accept=".csv" @change="handleFile" /><br />
+
+				<button :disabled="!importContent" @click="doImport">确认导入</button>
+				<button @click="showImport = false">取消</button>
+			</div></div>
 	</div>
 </template>
 
@@ -55,7 +59,10 @@ function handleFile(event) {
 	reader.readAsText(file, 'utf-8');
 }
 
+const loading = ref(true);
 onMounted(async () => {
+	loading.value = true;
+
 	const [dRes, uRes] = await Promise.all([
 		fetch('/dictionary/list').then(r => r.json()),
 		fetch(`/user/info?user=${currentUser.value}`).then(r => r.json())
@@ -63,6 +70,8 @@ onMounted(async () => {
 	dicts.value = dRes.data;
 	enabled.value = new Set(uRes.data.enabledDicts ?? []);
 	ready.value = true;
+
+	loading.value = false;
 });
 
 async function toggle(dict) {
