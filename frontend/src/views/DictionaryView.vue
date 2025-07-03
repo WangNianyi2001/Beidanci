@@ -1,36 +1,58 @@
 <template>
-	<h1>背单词 | 词库管理</h1>
-	<button @click="$router.push('/')">回到首页</button>
+	<h1>Beidanci / 词库管理</h1>
 
-	<div v-if="loading">
-		<p>加载中...</p>
-	</div>
-	<div v-else>
-		<button @click="showImport = true">导入词库</button>
+	<nav>
+		<button class="back" @click="$router.push('/')">⏪ 回到首页</button>
+		<button @click="showImport = true">🆕 导入词库</button>
+	</nav>
 
-		<ul v-if="ready">
-			<li v-for="dict in dicts" :key="dict">
-				<strong>{{ dict }}</strong>
-				<label>
-					<input type="checkbox" :checked="enabled.has(dict)" @change="toggle(dict)" />
-					启用
-				</label>
-				<button @click="confirmClear(dict)">清除记录</button>
-				<button @click="confirmDelete(dict)">删除词库</button>
-			</li>
-		</ul>
+	<main>
+		<p v-if="loading">加载中...</p>
+		<div v-else>
+			<div v-if="showImport" class="fc stretched gapped">
+				<h3>导入词库</h3>
+				<div class="fr">
+					<label>词库名</label>
+					<input class="fill" v-model="importName" />
+				</div>
 
-		<div v-if="showImport">
-			<h3>导入词库</h3>
-			<label>词库名：</label><input v-model="importName" /><br />
+				<input type="file" accept=".csv" @change="handleFile" />
 
-			<input type="file" accept=".csv" @change="handleFile" /><br />
+				<div>
+					<button :disabled="!importContent" @click="doImport">✅ 确认导入</button>
+					<button @click="showImport = false">🚫 取消</button>
+				</div>
+			</div>
 
-			<button :disabled="!importContent" @click="doImport">确认导入</button>
-			<button @click="showImport = false">取消</button>
+			<div v-if="ready">
+				<h2>词库列表</h2>
+				<ul class="dict-list fc stretched gapped">
+					<li v-for="dict in dicts" :key="dict">
+						<header class="fr">
+							<h3>{{ dict }}</h3>
+							<input type="checkbox" :checked="enabled.has(dict)" @change="toggle(dict)" />
+						</header>
+
+						<button @click="confirmClear(dict)">🔄️ 清除记录</button>
+						<button @click="confirmDelete(dict)">🗑️ 删除词库</button>
+					</li>
+				</ul>
+			</div>
 		</div>
-	</div>
+	</main>
 </template>
+
+<style lang="stylus" scoped>
+.dict-list {
+	list-style: none;
+	padding-inline-start: 0;
+
+	>li {
+		border-inline-start: 4pt solid;
+		padding-inline-start: 1em;
+	}
+}
+</style>
 
 <script setup>
 import { ref, onMounted } from 'vue';

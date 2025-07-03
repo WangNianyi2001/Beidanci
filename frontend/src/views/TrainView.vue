@@ -1,40 +1,68 @@
 <template>
-	<h1>Beidanci | 训练</h1>
-	<button @click="$router.push('/')">回到首页</button>
-	<div v-if="isLoading">加载中...</div>
-	<div v-else-if="!inTraining">
-		<button @click="startTraining">开始新的训练</button>
-	</div>
-	<div v-else>
-		<div>
+	<h1>Beidanci / 训练</h1>
+
+	<nav>
+		<button class="back" @click="backToHomepage">⏪ 回到首页</button>
+		<button v-if="!isLoading & !isTraining" @click="startTraining">♿ 开始新的训练</button>
+	</nav>
+
+	<main>
+		<p v-if="isLoading">加载中...</p>
+		<div v-else-if="isTraining" class="training fc centered stretched">
 			<p>第 {{ index + 1 }} / {{ trainingSet.length }} 题</p>
 			<h2 v-if="currentWord">{{ currentWord.orthography }}</h2>
 
-			<div v-if="!answered">
-				<div v-if="mode === 'self-report'">
-						<button @click="markScore(1)">记住</button>
-						<button @click="markScore(0.5)">模糊</button>
-						<button @click="markScore(0)">忘记</button>
+			<div v-if="!answered" class="options-container">
+				<div v-if="mode === 'self-report'" class="options fc stretched gapped">
+					<button class="option remembered" @click="markScore(1)">记住</button>
+					<button class="option blurred" @click="markScore(0.5)">模糊</button>
+					<button class="option forgotten" @click="markScore(0)">忘记</button>
 				</div>
-				<div v-else-if="mode === 'test'">
-						<div v-for="(choice, i) in choices" :key="i">
-							<button @click="markScore(choice.orthography === correctWord.orthography ? 1 : 0)">{{ choice.translation }}</button>
-						</div>
-						<button @click="markScore(0)">我不会</button>
+				<div v-else-if="mode === 'test'" class="options fc stretched gapped">
+					<button class="option"
+						v-for="(choice, i) in choices" :key="i"
+						@click="markScore(choice.orthography === correctWord.orthography ? 1 : 0)">
+						{{ choice.translation }}
+					</button>
+					<button class="option dont-know" @click="markScore(0)">我不会</button>
 				</div>
 			</div>
-			<div v-else>
+			<div v-else class="fc stretched centered gapped">
 				<p v-if="mode === 'test'">{{ pendingScore === 1 ? '正确 ✅' : '错误 ❌' }}</p>
-				<p>翻译：{{ currentWord.translation }}</p>
+				<p>
+					<label>释义</label>
+					<span>{{ currentWord.translation }}</span>
+				</p>
 				<button @click="nextQuestion">下一个</button>
 			</div>
 		</div>
-	</div>
+	</main>
 </template>
+
+<style lang="stylus" scoped>
+.option {
+	color: #333;
+
+	&.remembered {
+		color: #239b56;
+	}
+
+	&.blurred {
+		color: #d68910;
+	}
+
+	&.dont-know, &.forgotten {
+		color: #cb4335;
+	}
+}
+</style>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { currentUser } from '../stores/userStore.js';
+
+const router = useRouter();
 
 const mode = ref('self-report');
 const size = ref(25);
@@ -46,9 +74,17 @@ onMounted(async () => {
 });
 
 const isLoading = ref(false);
-const inTraining = ref(false);
+const isTraining = ref(false);
 const answered = ref(false);
 const pendingScore = ref(null);
+
+function backToHomepage() {
+	if(isTraining.value) {
+		if(!confirm('正在训练中，退出将丢失训练进度。是否退出？'))
+			return;
+	}
+	router.push('/');
+}
 
 /** @type {import("vue").Ref<Word[]>} */
 const trainingSet = ref([]);
@@ -88,27 +124,10 @@ async function startTraining() {
 	results.value = [];
 
 	isLoading.value = false;
-	inTraining.value = true;
+	isTraining.value = true;
 	
 	index.value = 0;
 	generateChoices();
-}
-
-function nextQuestion() {
-	results.value.push({
-		dict: currentWord.value.dict,
-		word: currentWord.value.word,
-		scores: [pendingScore.value]
-	});
-
-	pendingScore.value = null;
-	index.value++;
-
-	answered.value = false;
-	if(index.value >= trainingSet.value.length)
-		finishTraining();
-	else
-		generateChoices();
 }
 
 function generateChoices() {
@@ -129,8 +148,25 @@ function markScore(score) {
 	pendingScore.value = score;
 }
 
+function nextQuestion() {
+	results.value.push({
+		dict: currentWord.value.dict,
+		word: currentWord.value.word,
+		scores: [pendingScore.value]
+	});
+
+	pendingScore.value = null;
+	index.value++;
+
+	answered.value = false;
+	if(index.value >= trainingSet.value.length)
+		finishTraining();
+	else
+		generateChoices();
+}
+
 async function finishTraining() {
-	inTraining.value = false;
+	isTraining.value = false;
 	const time = Date.now();
 	alert('训练完成！');
 
