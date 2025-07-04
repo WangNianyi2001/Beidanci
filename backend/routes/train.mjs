@@ -49,13 +49,13 @@ router.get('/untrained-count', (req, res) => {
 // GET /train/generate?user=&size=
 router.get('/generate', (req, res) => {
 	const { user } = req.query;
-	const size = parseInt(req.query.size) || 25;
-
 	if (!user)
 		return res.status(400).json({ success: false, message: 'Missing user' });
 
 	try {
 		const userData = LoadUser(user);
+
+		const size = parseInt(req.query.size) || userData.settings?.training?.batchSize || 25;
 		const enabledDicts = userData.enabledDicts;
 
 		const allCandidates = [];

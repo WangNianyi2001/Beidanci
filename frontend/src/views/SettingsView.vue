@@ -26,17 +26,17 @@
 
 			<p>
 				<label>批次大小</label>
-				<input type="number" v-model.number="app.userSettings.value.batchSize" />
+				<input type="number" v-model.number="app.userSettings.value.training.batchSize" />
 			</p>
 
 			<p>
 				<label>激进度（0~1）</label>
-				<input type="number" step="0.1" v-model.number="app.userSettings.value.aggressiveness" />
+				<input type="number" step="0.1" v-model.number="app.userSettings.value.training.aggressiveness" />
 			</p>
 
 			<p>
 				<label>默认模式</label>
-				<select v-model="app.userSettings.value.trainingMode">
+				<select v-model="app.userSettings.value.training.mode">
 					<option value="self-report">自我申报</option>
 					<option value="test">测验</option>
 				</select>

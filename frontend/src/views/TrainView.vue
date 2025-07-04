@@ -13,12 +13,12 @@
 			<h2 v-if="currentWord">{{ currentWord.orthography }}</h2>
 
 			<div v-if="!answered" class="options-container">
-				<div v-if="app.userSettings.value.trainingMode === 'self-report'" class="options fc stretched gapped">
+				<div v-if="app.userSettings.value.training.mode === 'self-report'" class="options fc stretched gapped">
 					<button class="option remembered" @click="MarkScore(1)">记住</button>
 					<button class="option blurred" @click="MarkScore(0.5)">模糊</button>
 					<button class="option forgotten" @click="MarkScore(0)">忘记</button>
 				</div>
-				<div v-else-if="app.userSettings.value.trainingMode === 'test'" class="options fc stretched gapped">
+				<div v-else-if="app.userSettings.value.training.mode === 'test'" class="options fc stretched gapped">
 					<button class="option"
 						v-for="(choice, i) in choices" :key="i"
 						@click="MarkScore(choice.orthography === correctWord!.orthography ? 1 : 0)">
@@ -28,7 +28,7 @@
 				</div>
 			</div>
 			<div v-else class="fc stretched centered gapped">
-				<p v-if="app.userSettings.value.trainingMode === 'test'">{{ pendingScore === 1 ? '正确 ✅' : '错误 ❌' }}</p>
+				<p v-if="app.userSettings.value.training.mode === 'test'">{{ pendingScore === 1 ? '正确 ✅' : '错误 ❌' }}</p>
 				<p>
 					<label>释义</label>
 					<span>{{ currentWord.translation }}</span>

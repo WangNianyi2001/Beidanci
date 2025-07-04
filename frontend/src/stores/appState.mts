@@ -6,18 +6,16 @@ import { Fetch } from '../utils/web.mjs';
 // 用户
 
 export type UserSettings = {
-	trainingMode: 'self-report' | 'test',
-	batchSize: number,
-	aggressiveness: number,
+	training: {
+		mode: 'self-report' | 'test';
+		batchSize: number;
+		aggressiveness: number;
+	};
 };
 
 const allUsers = ref([] as string[]);
 const currentUser = ref(null as string | null);
-const userSettings = reactive({
-	trainingMode: 'self-report',
-	batchSize: 25,
-	aggressiveness: 0.3,
-} as UserSettings);
+const userSettings = ref(reactive({} as UserSettings));
 
 export async function CreateUser(name: string) {
 	await Fetch('POST', `/user/create?user=${name}`);
@@ -31,18 +29,23 @@ export async function DeleteUser(name: string) {
 export async function SwitchUser(name: string) {
 	currentUser.value = name;
 	localStorage.setItem('user', name);
+
+	// 获取用户设定。
+	const info = await Fetch<{ settings: UserSettings }>('GET', `/user/info?user=${name}`).then(r => r.data);
+	userSettings.value = info.settings;
 }
 
 // 从 localStorage 获得上一次使用的用户名。
 // 若不存在，使用第一个存在的用户或创建新的。
 async function ResolveCurrentUser() {
 	const storedUserName = localStorage.getItem('user');
-	currentUser.value = storedUserName;
-	if(!(allUsers.value as (string | null)[]).includes(currentUser.value)) {
+	if(storedUserName !== null && allUsers.value.includes(storedUserName))
+		SwitchUser(storedUserName);
+	else {
 		if(allUsers.value.length)
-			SwitchUser(allUsers.value[0]);
+			await SwitchUser(allUsers.value[0]);
 		else
-			CreateUser('Default User');
+			await CreateUser('Default User');
 	}
 }
 
@@ -50,7 +53,7 @@ export async function SaveUserSettings() {
 	await Fetch('PATCH', `/user/set-settings?user=${currentUser.value}`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(userSettings),
+		body: JSON.stringify(userSettings.value),
 	});
 }
 
@@ -139,8 +142,7 @@ export async function ReportTrainingResult(results: TrainingResult[]) {
 // 总结
 
 export const UseAppState = () => ({
-	allUsers, currentUser,
-	userSettings: ref(userSettings),
+	allUsers, currentUser, userSettings,
 
 	dictInfos: ref(dictInfos),
 	enabledDicts: computed(() => Object.values(dictInfos).filter(d => d.enabled)),
