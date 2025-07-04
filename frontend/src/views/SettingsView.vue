@@ -60,7 +60,7 @@
 import {
 	UseAppState,
 	SaveUserSettings, CreateUser, DeleteUser,
-} from '../stores/appState.mjs';
+} from '../modules/appState.mjs';
 const app = UseAppState();
 
 async function onSaveSettings() {

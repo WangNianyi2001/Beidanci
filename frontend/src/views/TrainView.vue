@@ -68,7 +68,7 @@ import {
 	UseAppState,
 	type Word, GetDictionary,
 	GenerateTrainingSet, ReportTrainingResult, type TrainingResult,
-} from '../stores/appState.mjs';
+} from '../modules/appState.mjs';
 const app = UseAppState();
 
 // 状态

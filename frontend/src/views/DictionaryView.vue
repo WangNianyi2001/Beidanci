@@ -49,7 +49,7 @@
 import {
 	UseAppState,
 	ToggleDictionaryEnability, ImportDictionaryFromCsv, DeleteDictionary, ClearTrainingRecordsInDict,
-} from '../stores/appState.mjs';
+} from '../modules/appState.mjs';
 const app = UseAppState();
 
 import { ref } from 'vue';

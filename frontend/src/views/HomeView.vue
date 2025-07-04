@@ -29,6 +29,6 @@
 </template>
 
 <script setup lang="ts">
-import { UseAppState } from '../stores/appState.mjs';
+import { UseAppState } from '../modules/appState.mjs';
 const app = UseAppState();
 </script>

@@ -186,6 +186,6 @@ label {
 import { ref } from 'vue';
 const isReady = ref(false);
 
-import { InitAppState } from './stores/appState.mjs';
+import { InitAppState } from './modules/appState.mjs';
 InitAppState().then(() => isReady.value = true);
 </script>
