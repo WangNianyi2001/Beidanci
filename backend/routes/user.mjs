@@ -33,6 +33,7 @@ router.post('/create', (req, res) => {
 				batchSize: 25,
 				mode: 'self-report',
 				aggressiveness: 0.3,
+				optionsCount: 5,
 			},
 		},
 	};

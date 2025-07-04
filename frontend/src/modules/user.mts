@@ -2,13 +2,10 @@ import { ref, reactive } from 'vue';
 import { Fetch } from '../utils/web.mjs';
 
 import { FetchAllDictInfo } from './dictionary.mjs';
+import { type TrainingSettings } from './training.mjs';
 
 export type UserSettings = {
-	training: {
-		mode: 'self-report' | 'test';
-		batchSize: number;
-		aggressiveness: number;
-	};
+	training: TrainingSettings;
 };
 
 export const allUsers = ref([] as string[]);

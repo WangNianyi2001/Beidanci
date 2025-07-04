@@ -41,6 +41,11 @@
 					<option value="test">测验</option>
 				</select>
 			</p>
+
+			<p v-if="app.userSettings.value.training.mode === 'test'">
+				<label>选项数目</label>
+				<input type="number" v-model.number="app.userSettings.value.training.optionsCount" />
+			</p>
 		</div>
 
 		<button @click="onSaveSettings" style="margin-block-start: 2em;">保存设置</button>
