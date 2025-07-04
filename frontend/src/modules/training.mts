@@ -103,7 +103,17 @@ export class TrainingSession {
 		++this.answeredCount;
 
 		// 根据结果添加巩固的习题。
-		const repeatTime = (score < 0.5) ? 2 : (score < 1) ? 1 : 0;
+		const repeatTime = (() => {
+			const intended = (score < 0.5) ? 2 : (score < 1) ? 1 : 0;
+
+			// 避免重复添加同一题过多次。
+			const current =  this.pool.filter(w => w === this.currentQuestion!.target).length;
+			const max = 2;
+			if(intended + current > max)
+				return max - current;
+
+			return intended;
+		})();
 		for(let i = 0; i < repeatTime; ++i)
 			this.pool.push(this.currentQuestion.target);
 	}

@@ -47,10 +47,12 @@ router.get('/info', (req, res) => {
 		const unconfidentLeaderboard = [];
 		if(dict in userData.trainingRecords) {
 			// 按现时掌握度排序。
-			const records = userData.trainingRecords[dict].map(record => ({
-				word: record.word,
-				confidence: EstimateCurrentConfidence(record),
-			}));
+			const records = userData.trainingRecords[dict]
+				.map(record => ({
+					word: record.word,
+					confidence: EstimateCurrentConfidence(record),
+				}))
+				.filter(r => r.confidence < 0.75);
 			records.sort((a, b) => a.confidence - b.confidence);
 			unconfidentLeaderboard.push(...records.slice(0, 10));
 		}
