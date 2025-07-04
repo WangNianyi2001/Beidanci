@@ -47,6 +47,8 @@ router.get('/untrained-count', (req, res) => {
 });
 
 
+import { EstimateCurrentConfidence, Lerp, CalculateDirectConfidence, ChooseBetweenTrainedAndUntrained, LEARNING_T } from '../utils/math.mjs';
+
 
 // 接收、处理训练结果
 // POST /train/report?user=
@@ -97,41 +99,30 @@ function UpdateTrainingRecordsByTrainingResult(records, time, results) {
 
 function CreateNewRecord(time, result) {
 	const scores = result.scores;
+	const confidence = CalculateDirectConfidence(scores);
+
+	// console.log(`NEW ${result.word}: ${confidence.toFixed(2)} (${scores})`);
+
 	return ({
 		word: result.word,
-		lastConfidence: CalculateDirectConfidence(scores),
+		lastConfidence: confidence,
 		lastTrainedTime: time,
 		count: scores.length,
 	});
 }
 
-function CalculateDirectConfidence(scores) {
-	return scores.reduce((a, b) => a + b, 0) / (scores.length + 1);
-}
-
-// TODO: 令此两值可配置。
-const FORGETTING_RATE = 0.1;  // 遗忘速率倍率
-const LEARNING_T = 0.5;  // 每次学习后，实际的掌握程度对记录值的影响程度，[0,1] 之间。
-
 function UpdateExistingRecord(record, time, result) {
 	const scores = result.scores;
 	const ecc = EstimateCurrentConfidence(record);
 	const dcc = CalculateDirectConfidence(scores);
+	const confidence = Math.exp(Lerp(Math.log(ecc), Math.log(dcc), LEARNING_T));
 
-	record.lastConfidence = Math.exp(Lerp(Math.log(ecc), Math.log(dcc), LEARNING_T));
+	// console.log(`UPDATE ${result.word}: ${record.lastConfidence.toFixed(2)}->${confidence.toFixed(2)} (${scores})`);
+
+	record.lastConfidence = confidence;
 	record.lastTrainedTime = time;
 	record.count += scores.length;
 }
-
-function Lerp(a, b, t) {
-	return a * (1-t) + b * t;
-}
-
-function EstimateCurrentConfidence(record, time = Date.now()) {
-	const elapsedTime = (time - record.lastTrainedTime) / 86400000;
-	return record.lastConfidence * Math.pow(1 + FORGETTING_RATE, -elapsedTime / record.count);
-}
-
 
 
 // 生成训练词集。
@@ -204,7 +195,3 @@ router.get('/generate', (req, res) => {
 		res.status(404).json({ success: false, message: err.message });
 	}
 });
-
-function ChooseBetweenTrainedAndUntrained(confidence, aggressiveness) {
-	return Math.random() < (1 - confidence) * (1 - aggressiveness);
-}

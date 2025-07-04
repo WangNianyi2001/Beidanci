@@ -9,12 +9,18 @@ export type Word = {
 	translation: string;
 };
 
+type WordRecord = {
+	word: string;
+	confidence: number;
+};
+
 export type DictInfo = {
 	name: string;
 	count: number;
 	// 用户特定信息
 	enabled?: boolean;
 	untrainedCount?: number;
+	unconfidentLeaderboard?: WordRecord[];
 };
 
 export const dictInfos = reactive({} as { [name: string]: DictInfo; });

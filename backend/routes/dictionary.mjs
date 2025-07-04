@@ -15,6 +15,7 @@ router.get('/list', (_, res) => {
 
 // GET /dictionary/info?dict=
 import { LoadUser, LoadDict } from './train.mjs';
+import { EstimateCurrentConfidence } from '../utils/math.mjs';
 router.get('/info', (req, res) => {
 	const { dict, user } = req.query;
 	if (!dict)
@@ -42,7 +43,18 @@ router.get('/info', (req, res) => {
 		const untrainedCount = allWords.filter(W => !trained.has(W.orthography)).length;
 		data.untrainedCount = untrainedCount;
 
-		// TODO：罗列最记不住的词汇
+		// 罗列最记不住的 top 10 词汇。
+		const unconfidentLeaderboard = [];
+		if(dict in userData.trainingRecords) {
+			// 按现时掌握度排序。
+			const records = userData.trainingRecords[dict].map(record => ({
+				word: record.word,
+				confidence: EstimateCurrentConfidence(record),
+			}));
+			records.sort((a, b) => a.confidence - b.confidence);
+			unconfidentLeaderboard.push(...records.slice(0, 10));
+		}
+		data.unconfidentLeaderboard = unconfidentLeaderboard;
 	}
 
 	res.json({ success: true, data });
