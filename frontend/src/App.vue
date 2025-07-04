@@ -21,28 +21,58 @@ body {
 	height: 100%;
 }
 
-.fc, .fr {
+f() {
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: baseline;
-
-	&.fr { flex-direction: row; }
-	&.fc { flex-direction: column; }
-
-	.fill { flex: 1; }
+}
+.f {
+	f();
 }
 
-.centered {
+fr() {
+	f();
+	flex-direction: row;
+}
+.fr {
+	fr();
+}
+
+fc() {
+	f();
+	flex-direction: column;
+}
+.fc {
+	fc();
+}
+
+fill() {
+	flex: 1;
+}
+.fill {
+	fill();
+}
+
+centered() {
 	text-align: center;
 	align-items: center;
 }
-
-.stretched {
-	align-items: stretch;
+.centered {
+	centered();
 }
 
-.gapped {
+stretched() {
+	align-items: stretch;
+}
+.stretched {
+	stretched();
+}
+
+gapped() {
 	gap: 0.5em;
+}
+.gapped {
+	gapped();
 }
 
 p {
@@ -98,15 +128,12 @@ label {
 	overflow-inline: hidden;
 	overflow-block: auto;
 
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-
 	background: #eee;
 }
 
 #app {
-	>h1 {
+	h1 {
+		centered();
 	}
 
 	>nav {
@@ -114,16 +141,43 @@ label {
 		inline-size: 100%;
 		block-size: 6em;
 
-		display: flex;
-		flex-direction: row;
-		flex-wrap: nowrap;
-		align-items: baseline;
-		gap: 0.5em;
+		fr();
+		gapped();
 		justify-content: center;
 	}
 
 	>main {
-		width: 75%;
+		inline-size: 75%;
+		margin-inline: auto;
+	}
+
+	.dict-list {
+		fc();
+		stretched();
+		gapped();
+
+		list-style: none;
+		padding-inline-start: 0;
+
+		>li {
+			fc();
+			gapped();
+			stretched();
+
+			border-inline-start: 4pt solid;
+			padding-inline-start: 1em;
+			padding-block: 0.5em;
+
+			header {
+				fr();
+				
+				h3 {
+					margin-block: 0;
+					fill();
+					text-align: left;
+				}
+			}
+		}
 	}
 }
 </style>

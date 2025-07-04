@@ -23,31 +23,25 @@
 		</div>
 
 		<h2>词库列表</h2>
-		<ul class="dict-list fc stretched gapped">
+		<ul class="dict-list">
 			<li v-for="dict in app.dictInfos.value" :key="dict.name">
-				<header class="fr">
+				<header>
 					<h3>{{ dict.name }}</h3>
 					<input type="checkbox" :checked="app.enabledDicts.value.some(d => d.name === dict.name)" @change="ToggleDictionaryEnability(dict.name)" />
+					<span>{{ (() => {
+						const trained = dict.count - dict.untrainedCount!;
+						return `${trained}/${dict.count} (${(trained / dict.count).toFixed(1)}%)`;
+					})() }}</span>
 				</header>
 
-				<button @click="confirmClear(dict.name)">🔄️ 清除记录</button>
-				<button @click="confirmDelete(dict.name)">🗑️ 删除词库</button>
+				<div>
+					<button @click="confirmClear(dict.name)">🔄️ 清除记录</button>
+					<button @click="confirmDelete(dict.name)">🗑️ 删除词库</button>
+				</div>
 			</li>
 		</ul>
 	</main>
 </template>
-
-<style lang="stylus" scoped>
-.dict-list {
-	list-style: none;
-	padding-inline-start: 0;
-
-	>li {
-		border-inline-start: 4pt solid;
-		padding-inline-start: 1em;
-	}
-}
-</style>
 
 <script setup lang="ts">
 import {

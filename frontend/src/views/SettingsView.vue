@@ -5,7 +5,7 @@
 		<button class="back" @click="$router.push('/')">⏪ 回到首页</button>
 	</nav>
 
-	<div class="fc stretched" style="gap: 0.5em;">
+	<main class="fc stretched gapped">
 		<div class="settings-group">
 			<h2>用户设置</h2>
 
@@ -44,7 +44,7 @@
 		</div>
 
 		<button @click="onSaveSettings" style="margin-block-start: 2em;">保存设置</button>
-	</div>
+	</main>
 </template>
 
 <style lang="stylus" scoped>

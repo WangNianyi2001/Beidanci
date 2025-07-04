@@ -10,10 +10,14 @@
 	<main class="fc stretched centered">
 		<h2>欢迎回来，{{ app.currentUser }}！</h2>
 		<div v-if="app.enabledDicts.value.length">
-			<ul class="dict-list fc stretched gapped">
+			<ul class="dict-list">
 				<li v-for="dict in app.enabledDicts.value" :key="dict.name">
-					<header class="fr">
+					<header>
 						<h3>{{ dict.name }}</h3>
+						<span>{{ (() => {
+							const trained = dict.count - dict.untrainedCount!;
+							return `${trained}/${dict.count} (${(trained / dict.count).toFixed(1)}%)`;
+						})() }}</span>
 					</header>
 				</li>
 			</ul>
@@ -24,18 +28,6 @@
 		</div>
 	</main>
 </template>
-
-<style lang="stylus" scoped>
-.dict-list {
-	list-style: none;
-	padding-inline-start: 0;
-
-	>li {
-		border-inline-start: 4pt solid;
-		padding-inline-start: 1em;
-	}
-}
-</style>
 
 <script setup lang="ts">
 import { UseAppState } from '../stores/appState.mjs';

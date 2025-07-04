@@ -15,7 +15,7 @@ export type UserSettings = {
 
 const allUsers = ref([] as string[]);
 const currentUser = ref(null as string | null);
-const userSettings = ref(reactive({} as UserSettings));
+const userSettings = reactive({} as UserSettings);
 
 export async function CreateUser(name: string) {
 	await Fetch('POST', `/user/create?user=${name}`);
@@ -30,9 +30,7 @@ export async function SwitchUser(name: string) {
 	currentUser.value = name;
 	localStorage.setItem('user', name);
 
-	// 获取用户设定。
-	const info = await Fetch<{ settings: UserSettings }>('GET', `/user/info?user=${name}`).then(r => r.data);
-	userSettings.value = info.settings;
+	FetchCurrentUserInfo();
 }
 
 // 从 localStorage 获得上一次使用的用户名。
@@ -49,11 +47,23 @@ async function ResolveCurrentUser() {
 	}
 }
 
+async function FetchCurrentUserInfo() {
+	const info = await Fetch<{ settings: UserSettings }>('GET', `/user/info?user=${currentUser.value}`).then(r => r.data);
+
+	// 更新设置。
+	const settings = info.settings;
+	for(const key in settings)
+		(userSettings as any)[key] = (settings as any)[key];
+
+	// 更新字典信息。
+	await FetchAllDictInfo();
+}
+
 export async function SaveUserSettings() {
 	await Fetch('PATCH', `/user/set-settings?user=${currentUser.value}`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify(userSettings.value),
+		body: JSON.stringify(userSettings),
 	});
 }
 
@@ -80,6 +90,11 @@ const dictInfos = reactive({} as { [name: string]: DictInfo; });
 async function FetchDictInfo(dict: string) {
 	const info = (await Fetch<DictInfo>('GET', `/dictionary/info?dict=${dict}&user=${currentUser.value}`)).data;
 	dictInfos[dict] = info;
+}
+
+async function FetchAllDictInfo() {
+	const dictList = (await Fetch<string[]>('GET', '/dictionary/list')).data;
+	await Promise.allSettled(dictList.map(FetchDictInfo));
 }
 
 export async function GetDictionary(dict: string) {
@@ -135,6 +150,9 @@ export async function ReportTrainingResult(results: TrainingResult[]) {
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ time: Date.now(), results })
 	});
+
+	// 更新客户端数据，如没学过的词等。
+	FetchCurrentUserInfo();
 }
 
 
@@ -142,7 +160,8 @@ export async function ReportTrainingResult(results: TrainingResult[]) {
 // 总结
 
 export const UseAppState = () => ({
-	allUsers, currentUser, userSettings,
+	allUsers, currentUser,
+	userSettings: ref(userSettings),
 
 	dictInfos: ref(dictInfos),
 	enabledDicts: computed(() => Object.values(dictInfos).filter(d => d.enabled)),
@@ -153,8 +172,5 @@ export async function InitAppState() {
 	allUsers.value = ((await Fetch<string[]>('GET', '/user/list'))).data;
 
 	await ResolveCurrentUser();
-
-	// 获得词典信息。
-	const dictList = (await Fetch<string[]>('GET', '/dictionary/list')).data;
-	await Promise.allSettled(dictList.map(FetchDictInfo));
+	await FetchAllDictInfo();
 }
