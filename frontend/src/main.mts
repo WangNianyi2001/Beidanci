@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
-import App from './App.vue';
 import { createRouter, createWebHashHistory } from 'vue-router';
+
+import App from './App.vue';
 import HomeView from './views/HomeView.vue';
 import TrainView from './views/TrainView.vue';
 import DictionaryView from './views/DictionaryView.vue';
