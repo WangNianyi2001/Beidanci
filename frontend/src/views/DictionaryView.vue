@@ -14,10 +14,10 @@
 				<input class="fill" v-model="importName" />
 			</div>
 
-			<input type="file" accept=".csv" @change="handleFile" />
+			<input type="file" accept=".csv" @change="onFileSelected" />
 
 			<div>
-				<button :disabled="!importContent" @click="doImport">✅ 确认导入</button>
+				<button :disabled="!importContent" @click="onImportCsv">✅ 确认导入</button>
 				<button @click="showImport = false">🚫 取消</button>
 			</div>
 		</div>
@@ -27,7 +27,9 @@
 			<li v-for="dict in app.dictInfos.value" :key="dict.name">
 				<header>
 					<h3>{{ dict.name }}</h3>
-					<input type="checkbox" :checked="app.enabledDicts.value.some(d => d.name === dict.name)" @change="ToggleDictionaryEnability(dict.name)" />
+					<input type="checkbox"
+						:checked="app.enabledDicts.value.some(d => d.name === dict.name)"
+						@change="ToggleDictionaryEnability(dict.name)" />
 					<span>{{ (() => {
 						const trained = dict.count - dict.untrainedCount!;
 						return `${trained}/${dict.count} (${(trained / dict.count).toFixed(1)}%)`;
@@ -35,8 +37,8 @@
 				</header>
 
 				<div>
-					<button @click="confirmClear(dict.name)">🔄️ 清除记录</button>
-					<button @click="confirmDelete(dict.name)">🗑️ 删除词库</button>
+					<button @click="onClear(dict.name)">🔄️ 清除记录</button>
+					<button @click="onDelete(dict.name)">🗑️ 删除词库</button>
 				</div>
 			</li>
 		</ul>
@@ -56,7 +58,7 @@ const showImport = ref(false);
 const importName = ref('');
 const importContent = ref('');
 
-function handleFile(event: Event) {
+function onFileSelected(event: Event) {
 	const file = (event.target as HTMLInputElement).files![0];
 	if (!file)
 		return;
@@ -66,21 +68,21 @@ function handleFile(event: Event) {
 	reader.readAsText(file, 'utf-8');
 }
 
-async function confirmDelete(dict: string) {
+async function onDelete(dict: string) {
 	if(!confirm(`确定删除词库「${dict}」吗？此操作不可恢复。`))
 		return;
 	await DeleteDictionary(dict);
 	alert('删除成功。');
 }
 
-async function confirmClear(dict: string) {
+async function onClear(dict: string) {
 	if(!confirm(`确定清除词库「${dict}」的训练记录？`))
 		return;
 	await ClearTrainingRecordsInDict(dict);
 	alert('清除成功。');
 }
 
-async function doImport() {
+async function onImportCsv() {
 	if (!importName.value || !importContent.value)
 		return;
 	await ImportDictionaryFromCsv(importName.value, importContent.value);

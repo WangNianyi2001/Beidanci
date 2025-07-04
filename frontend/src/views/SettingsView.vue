@@ -16,7 +16,7 @@
 				</select>
 			</p>
 			<p>
-				<button @click="OnCreateUser" class="fill">新增用户</button>
+				<button @click="onCreateUser" class="fill">新增用户</button>
 				<button @click="onDeleteUser" class="fill">删除当前用户</button>
 			</p>
 		</div>
@@ -68,7 +68,7 @@ async function onSaveSettings() {
 	alert('保存成功。');
 }
 
-async function OnCreateUser() {
+async function onCreateUser() {
 	const name = prompt('请输入新用户名：');
 	if(!name)
 		return;
