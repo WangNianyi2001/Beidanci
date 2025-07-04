@@ -127,9 +127,9 @@ function onNextQuestion() {
 }
 
 async function onFinishTraining() {
-	const session = trainingSession;
+	const session = trainingSession.value!;
 	trainingSession.value = null;
-	await session.value?.ReportResults();
+	await session.ReportResults();
 	alert('训练完成！');
 }
 </script>
