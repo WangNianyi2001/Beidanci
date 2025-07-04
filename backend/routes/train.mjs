@@ -7,7 +7,7 @@ const router = Express.Router();
 export default router;
 
 // 工具函数：加载用户记录
-function LoadUser(user) {
+export function LoadUser(user) {
 	const path = Path.join(userDir, `${user}.json`);
 	if (!Fs.existsSync(path))
 		throw new Error('User not found');
@@ -15,13 +15,13 @@ function LoadUser(user) {
 }
 
 // 工具函数：保存用户记录
-function SaveUser(user, data) {
+export function SaveUser(user, data) {
 	const path = Path.join(userDir, `${user}.json`);
 	Fs.writeFileSync(path, JSON.stringify(data, null, 2));
 }
 
 // 工具函数：加载词库词表
-function LoadDict(dictName) {
+export function LoadDict(dictName) {
 	const path = Path.join(dictDir, `${dictName}.json`);
 	if (!Fs.existsSync(path))
 		throw new Error('Dict not found');

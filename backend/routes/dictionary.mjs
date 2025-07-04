@@ -14,8 +14,9 @@ router.get('/list', (_, res) => {
 });
 
 // GET /dictionary/info?dict=
+import { LoadUser } from './train.mjs';
 router.get('/info', (req, res) => {
-	const { dict } = req.query;
+	const { dict, user } = req.query;
 	if (!dict)
 		return res.status(400).json({ success: false, message: 'Missing dict name' });
 
@@ -23,8 +24,28 @@ router.get('/info', (req, res) => {
 	if (!Fs.existsSync(path))
 		return res.status(404).json({ success: false, message: 'Dict not found' });
 
-	const data = JSON.parse(Fs.readFileSync(path, 'utf-8'));
-	res.json({ success: true, data: { name: data.name, size: data.vocabulary.length } });
+	const raw = JSON.parse(Fs.readFileSync(path, 'utf-8'));c
+	const data = {
+		name: raw.name,
+		count: raw.vocabulary.length,
+	};
+
+	// 添加用户特定的信息
+	if(user) {
+		const userData = LoadUser(user);
+
+		const enabled = userData.enabledDicts.includes(dict);
+		data.enabled = enabled;
+
+		const trained = new Set((userData.trainingRecords[dict] || []).map(R => R.word));
+		const allWords = LoadDict(dict);
+		const untrainedCount = allWords.filter(W => !trained.has(W.orthography)).length;
+		data.untrainedCount = untrainedCount;
+
+		// TODO：罗列最记不住的词汇
+	}
+
+	res.json({ success: true, data });
 });
 
 // GET /dictionary/vocabulary?dict=
