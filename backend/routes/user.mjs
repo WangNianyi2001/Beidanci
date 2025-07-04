@@ -28,6 +28,13 @@ router.post('/create', (req, res) => {
 		name: userName,
 		trainingRecords: {},
 		enabledDicts: [],
+		settings: {
+			training: {
+				batchSize: 25,
+				mode: 'self-report',
+				aggressiveness: 0.3,
+			},
+		},
 	};
 	Fs.writeFileSync(filePath, JSON.stringify(record, null, 2));
 	res.json({ success: true });

@@ -1,5 +1,5 @@
 <template>
-	<router-view></router-view>
+	<router-view v-if="isReady"></router-view>
 </template>
 
 <style lang="stylus">
@@ -182,9 +182,10 @@ label {
 }
 </style>
 
-<script lang="ts">
-import { UseAppState, InitAppState } from './stores/appState.mjs';
+<script setup lang="ts">
+import { ref } from 'vue';
+const isReady = ref(false);
 
-InitAppState();
-const app = UseAppState();
+import { InitAppState } from './stores/appState.mjs';
+InitAppState().then(() => isReady.value = true);
 </script>

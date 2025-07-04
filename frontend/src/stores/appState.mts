@@ -19,18 +19,26 @@ const userSettings = reactive({} as UserSettings);
 
 export async function CreateUser(name: string) {
 	await Fetch('POST', `/user/create?user=${name}`);
+	await UpdateUserList();
 	await SwitchUser(name);
 }
 
 export async function DeleteUser(name: string) {
 	await Fetch('DELETE', `/user?user=${name}`);
+	// 从客户端缓存中删除。
+	const index = allUsers.value.indexOf(name);
+	if(index !== -1)
+			allUsers.value.splice(index, 1);
+
+	await UpdateUserList();
+	await ResolveCurrentUser();
 }
 
 export async function SwitchUser(name: string) {
 	currentUser.value = name;
 	localStorage.setItem('user', name);
 
-	FetchCurrentUserInfo();
+	await FetchCurrentUserInfo();
 }
 
 // 从 localStorage 获得上一次使用的用户名。
@@ -45,6 +53,10 @@ async function ResolveCurrentUser() {
 		else
 			await CreateUser('Default User');
 	}
+}
+
+async function UpdateUserList() {
+	allUsers.value = ((await Fetch<string[]>('GET', '/user/list'))).data;
 }
 
 async function FetchCurrentUserInfo() {
@@ -168,9 +180,7 @@ export const UseAppState = () => ({
 });
 
 export async function InitAppState() {
-	// 获得所有用户列表。
-	allUsers.value = ((await Fetch<string[]>('GET', '/user/list'))).data;
-
+	await UpdateUserList();
 	await ResolveCurrentUser();
 	await FetchAllDictInfo();
 }
