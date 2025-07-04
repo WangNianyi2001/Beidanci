@@ -1,5 +1,6 @@
 {
 	"name": "@nianyi-wang/beidanci-backend",
+	"version": "0.1.0",
 	"type": "module",
 	"dependencies": {
 		"body-parser": "^2.2.0",
