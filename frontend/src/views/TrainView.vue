@@ -3,12 +3,18 @@
 
 	<nav>
 		<button class="back" @click="onBackToHomepage">⏪ 回到首页</button>
-		<button v-if="!isLoading && !isTraining" @click="onStartTraining">♿ 开始新的训练</button>
 	</nav>
 
 	<main>
 		<p v-if="isLoading">加载中...</p>
-		<div v-else-if="isTraining" class="training fc centered stretched">
+		<div v-else-if="!isTraining" class="fc centered">
+			<button v-if="hasTrainableWords" @click="onStartTraining">♿ 开始新的训练</button>
+			<div v-else class="fc centered gapped">
+				<p>词库中无词</p>
+				<button @click="$router.push('/dictionary')">📚 去管理词库</button>
+			</div>
+		</div>
+		<div v-else class="training fc centered stretched">
 			<p>第 {{ index + 1 }} / {{ trainingSet.length }} 题</p>
 			<h2 v-if="currentWord">{{ currentWord.orthography }}</h2>
 
@@ -76,6 +82,7 @@ const isLoading = ref(false);
 const isTraining = ref(false);
 const answered = ref(false);
 const pendingScore = ref(null as number | null);
+const hasTrainableWords = computed(() => app.enabledDicts.value.reduce((sum, b) => sum + b.count, 0));
 
 function onBackToHomepage() {
 	if(isTraining.value) {
