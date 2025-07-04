@@ -21,8 +21,8 @@
 3. 你可以自由配置题组的“激进程度”：设置得越激进，题组中就会出现越多的新单词；反之算法就会更注重巩固薄弱词汇。
 
 <figure style="text-align: center;">
-	<img src="./readme/self-report-training.png" width="45%" />
-	<img src="./readme/test-training.png" width="45%" />
+	<img src="./readme/self-report-training.png" width="60%" />
+	<img src="./readme/test-training.png" width="60%" />
 	<figcaption>墨墨所采用的自我申报式训练，与本工具额外支持的测验式训练。</figcaption>
 </figure>
 
@@ -42,8 +42,8 @@
 如果没有 `GNU Make`，可以在 `backend` 中执行 `npm run start`，并在 `frontend` 中执行 `npm run dev`。
 
 <figure style="text-align: center;">
-	<img src="./readme/homepage.png" width="45%" />
-	<img src="./readme/settings.png" width="45%" />
+	<img src="./readme/homepage.png" width="60%" />
+	<img src="./readme/settings.png" width="60%" />
 	<figcaption>运行后看到的 app 首页与设置页。</figcaption>
 </figure>
 
@@ -51,6 +51,7 @@
 ## 词库与用户数据
 
 您可以在设置页导入 CSV 格式的词库，内容格式为：两列、无表头，第一列为词汇在源语言中的正字，第二列为中文翻译。
+`dicts` 中提供了一些示例词库。
 
 一切词库与用户数据储存于 `%APPDATA%/Roaming/Nianyi Wang/Beidanci/` 中。
 
