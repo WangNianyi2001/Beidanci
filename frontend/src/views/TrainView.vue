@@ -2,8 +2,8 @@
 	<h1>Beidanci / 训练</h1>
 
 	<nav>
-		<button class="back" @click="backToHomepage">⏪ 回到首页</button>
-		<button v-if="!isLoading & !isTraining" @click="startTraining">♿ 开始新的训练</button>
+		<button class="back" @click="onBackToHomepage">⏪ 回到首页</button>
+		<button v-if="!isLoading && !isTraining" @click="onStartTraining">♿ 开始新的训练</button>
 	</nav>
 
 	<main>
@@ -13,27 +13,27 @@
 			<h2 v-if="currentWord">{{ currentWord.orthography }}</h2>
 
 			<div v-if="!answered" class="options-container">
-				<div v-if="mode === 'self-report'" class="options fc stretched gapped">
-					<button class="option remembered" @click="markScore(1)">记住</button>
-					<button class="option blurred" @click="markScore(0.5)">模糊</button>
-					<button class="option forgotten" @click="markScore(0)">忘记</button>
+				<div v-if="app.userSettings.value.trainingMode === 'self-report'" class="options fc stretched gapped">
+					<button class="option remembered" @click="MarkScore(1)">记住</button>
+					<button class="option blurred" @click="MarkScore(0.5)">模糊</button>
+					<button class="option forgotten" @click="MarkScore(0)">忘记</button>
 				</div>
-				<div v-else-if="mode === 'test'" class="options fc stretched gapped">
+				<div v-else-if="app.userSettings.value.trainingMode === 'test'" class="options fc stretched gapped">
 					<button class="option"
 						v-for="(choice, i) in choices" :key="i"
-						@click="markScore(choice.orthography === correctWord.orthography ? 1 : 0)">
+						@click="MarkScore(choice.orthography === correctWord!.orthography ? 1 : 0)">
 						{{ choice.translation }}
 					</button>
-					<button class="option dont-know" @click="markScore(0)">我不会</button>
+					<button class="option dont-know" @click="MarkScore(0)">我不会</button>
 				</div>
 			</div>
 			<div v-else class="fc stretched centered gapped">
-				<p v-if="mode === 'test'">{{ pendingScore === 1 ? '正确 ✅' : '错误 ❌' }}</p>
+				<p v-if="app.userSettings.value.trainingMode === 'test'">{{ pendingScore === 1 ? '正确 ✅' : '错误 ❌' }}</p>
 				<p>
 					<label>释义</label>
 					<span>{{ currentWord.translation }}</span>
 				</p>
-				<button @click="nextQuestion">下一个</button>
+				<button @click="onNextQuestion">下一个</button>
 			</div>
 		</div>
 	</main>
@@ -57,28 +57,27 @@
 }
 </style>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
+<script setup lang="ts">
+import {
+	UseAppState,
+	type Word, GetDictionary,
+	GenerateTrainingSet, ReportTrainingResult, type TrainingResult,
+} from '../stores/appState.mjs';
+const app = UseAppState();
+
+// 状态
+
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { currentUser } from '../stores/userStore.js';
 
 const router = useRouter();
-
-const mode = ref('self-report');
-const size = ref(25);
-
-onMounted(async () => {
-	const res = await fetch(`/user/info?user=${currentUser.value}`).then(r => r.json());
-	mode.value = res.data.settings?.defaultMode ?? 'self-report';
-	size.value = res.data.settings?.batchSize ?? 25;
-});
 
 const isLoading = ref(false);
 const isTraining = ref(false);
 const answered = ref(false);
-const pendingScore = ref(null);
+const pendingScore = ref(null as number | null);
 
-function backToHomepage() {
+function onBackToHomepage() {
 	if(isTraining.value) {
 		if(!confirm('正在训练中，退出将丢失训练进度。是否退出？'))
 			return;
@@ -86,40 +85,41 @@ function backToHomepage() {
 	router.push('/');
 }
 
-/** @type {import("vue").Ref<Word[]>} */
-const trainingSet = ref([]);
+// 训练
+
+const trainingSet = ref([] as Word[]);
 const index = ref(0);
-const results = ref([]);
+const results = ref([] as TrainingResult[]);
 
-/** @type {import("vue").ComputedRef<Word>} */
-const currentWord = computed(() => trainingSet.value[index.value]);
+const currentWord = computed(() => trainingSet.value[index.value] as Word);
 
-/** @type {import("vue").Ref<Word[]>} */
-const choices = ref([]);
-/** @type {import("vue").Ref<Word>} */
-const correctWord = ref(null);
+const choices = ref([] as Word[]);
+const correctWord = ref(null as Word | null);
 
-/** @type {{ [key:string]: { [key:string]: Word } }} */
-const cachedDicts = {};
+const cachedDicts: {
+	[key: string]: {
+		[key: string]: Word;
+	};
+} = {};
 
-async function startTraining() {
+async function onStartTraining() {
 	isLoading.value = true;
 
-	trainingSet.value = (await (await fetch(`/train/generate?user=${currentUser.value}&size=${size}`)).json()).data;
+	trainingSet.value = await GenerateTrainingSet();;
 
-	// Preload dictionaries.
+	// 预加载词库。
 	for(const word of trainingSet.value) {
 		const dictName = word.dict;
-		if(dictName in cachedDicts)
+		if(!dictName || (dictName in cachedDicts))
 			continue;
 
-		const res = await fetch(`/dictionary/vocabulary?dict=${word.dict}`).then(r => r.json());
-		const dict = {};
-		for(const word of res.data) {
+		const wordList = await GetDictionary(dictName);
+		const dict = {} as { [word: string]: Word; };
+		for(const word of wordList) {
 			word.dict = dictName;
 			dict[word.orthography] = word;
 		}
-		cachedDicts[word.dict] = dict;
+		cachedDicts[dictName] = dict;
 	}
 	results.value = [];
 
@@ -127,32 +127,32 @@ async function startTraining() {
 	isTraining.value = true;
 	
 	index.value = 0;
-	generateChoices();
+	GenerateChoices();
 }
 
-function generateChoices() {
-	const dict = cachedDicts[currentWord.value.dict];
+function GenerateChoices() {
+	const dict = cachedDicts[currentWord.value.dict!];
 
 	correctWord.value = dict[currentWord.value.orthography];
 
 	choices.value = Object.values(dict)
-		.filter(word => word.orthography !== correctWord.value.orthography)
+		.filter(word => word.orthography !== correctWord.value!.orthography)
 		.sort(() => Math.random() - 0.5)
 		.slice(0, 3);
 	choices.value.push(correctWord.value);
 	choices.value.sort(() => Math.random() - 0.5);
 }
 
-function markScore(score) {
+function MarkScore(score: number) {
 	answered.value = true;
 	pendingScore.value = score;
 }
 
-function nextQuestion() {
+function onNextQuestion() {
 	results.value.push({
-		dict: currentWord.value.dict,
-		word: currentWord.value.word,
-		scores: [pendingScore.value]
+		dict: currentWord.value.dict!,
+		word: currentWord.value.orthography,
+		scores: [pendingScore.value!]
 	});
 
 	pendingScore.value = null;
@@ -160,21 +160,14 @@ function nextQuestion() {
 
 	answered.value = false;
 	if(index.value >= trainingSet.value.length)
-		finishTraining();
+		onFinishTraining();
 	else
-		generateChoices();
+		GenerateChoices();
 }
 
-async function finishTraining() {
+async function onFinishTraining() {
 	isTraining.value = false;
-	const time = Date.now();
 	alert('训练完成！');
-
-	// Report training result
-	await fetch(`/train/report?user=${currentUser.value}`, {
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ time, results: results.value })
-	});
+	await ReportTrainingResult(results.value);
 }
 </script>

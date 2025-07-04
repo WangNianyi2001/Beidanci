@@ -127,3 +127,10 @@ label {
 	}
 }
 </style>
+
+<script lang="ts">
+import { UseAppState, InitAppState } from './stores/appState.mjs';
+
+InitAppState();
+const app = UseAppState();
+</script>

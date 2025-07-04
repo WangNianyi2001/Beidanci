@@ -14,7 +14,7 @@ router.get('/list', (_, res) => {
 });
 
 // GET /dictionary/info?dict=
-import { LoadUser } from './train.mjs';
+import { LoadUser, LoadDict } from './train.mjs';
 router.get('/info', (req, res) => {
 	const { dict, user } = req.query;
 	if (!dict)
@@ -24,7 +24,7 @@ router.get('/info', (req, res) => {
 	if (!Fs.existsSync(path))
 		return res.status(404).json({ success: false, message: 'Dict not found' });
 
-	const raw = JSON.parse(Fs.readFileSync(path, 'utf-8'));c
+	const raw = JSON.parse(Fs.readFileSync(path, 'utf-8'));
 	const data = {
 		name: raw.name,
 		count: raw.vocabulary.length,

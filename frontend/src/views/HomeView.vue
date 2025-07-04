@@ -8,12 +8,12 @@
 	</nav>
 
 	<main class="fc stretched centered">
-		<div v-if="dicts.length">
-			<h2>训练进度</h2>
+		<h2>欢迎回来，{{ app.currentUser }}！</h2>
+		<div v-if="app.enabledDicts.value.length">
 			<ul class="dict-list fc stretched gapped">
-				<li v-for="dict in dicts" :key="dict">
+				<li v-for="dict in app.enabledDicts.value" :key="dict.name">
 					<header class="fr">
-						<h3>{{ dict }}</h3>
+						<h3>{{ dict.name }}</h3>
 					</header>
 				</li>
 			</ul>
@@ -37,19 +37,7 @@
 }
 </style>
 
-<script setup>
-import { ref, onMounted } from 'vue';
-import { currentUser } from '../stores/userStore.js';
-
-const dicts = ref([]);
-const enabled = ref(new Set());
-
-onMounted(async () => {
-	const [dRes, uRes] = await Promise.all([
-		fetch('/dictionary/list').then(r => r.json()),
-		fetch(`/user/info?user=${currentUser.value}`).then(r => r.json())
-	]);
-	dicts.value = dRes.data;
-	enabled.value = new Set(uRes.data.enabledDicts ?? []);
-});
+<script setup lang="ts">
+import { UseAppState } from '../stores/appState.mjs';
+const app = UseAppState();
 </script>
