@@ -12,7 +12,10 @@ export function Lerp(a, b, t) {
 }
 
 export function CalculateDirectConfidence(scores) {
-	return scores.reduce((a, b) => a + b, 0) / scores.length;
+	let sum = 0;
+	for(let i = 0; i < scores.length; ++i)
+		sum += Math.pow(0.5, i) * scores[i];
+	return sum / scores.length;
 }
 
 export function ChooseBetweenTrainedAndUntrained(confidence, aggressiveness) {
