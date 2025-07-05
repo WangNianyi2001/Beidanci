@@ -15,7 +15,7 @@
 						<h3>{{ dict.name }}</h3>
 						<span>{{ (() => {
 							const trained = dict.count - dict.untrainedCount!;
-							return `${trained}/${dict.count} (${(trained / dict.count).toFixed(1)}%)`;
+							return `${trained}/${dict.count} (${(trained / dict.count * 100).toFixed(1)}%)`;
 						})() }}</span>
 					</header>
 					<div v-if="dict.unconfidentLeaderboard?.length ?? 0" class="unconfident-leaderboard">

@@ -32,7 +32,7 @@
 						@change="ToggleDictionaryEnability(dict.name)" />
 					<span>{{ (() => {
 						const trained = dict.count - dict.untrainedCount!;
-						return `${trained}/${dict.count} (${(trained / dict.count).toFixed(1)}%)`;
+						return `${trained}/${dict.count} (${(trained / dict.count * 100).toFixed(1)}%)`;
 					})() }}</span>
 				</header>
 
