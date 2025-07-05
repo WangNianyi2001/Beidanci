@@ -127,9 +127,14 @@ function onNextQuestion() {
 }
 
 async function onFinishTraining() {
+	isLoading.value = true;
+
 	const session = trainingSession.value!;
 	trainingSession.value = null;
 	await session.ReportResults();
+	
+	isLoading.value = false;
+
 	alert('训练完成！');
 }
 </script>
